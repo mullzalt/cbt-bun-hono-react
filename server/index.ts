@@ -1,9 +1,20 @@
-import { Hono } from 'hono'
+import { app } from "./app";
+// import { pool } from "./db";
+import { config } from "./lib/config";
+import { Env } from "./lib/env";
+import { logger } from "./lib/logger";
 
-const app = new Hono()
+const server = Bun.serve({
+  fetch: app.fetch,
+  port: config.port,
+});
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+logger.info(`Server is running on ${server.url.origin}, env: ${Env.NODE_ENV}`);
 
-export default app
+process.on("SIGINT", async () => {
+  logger.info("Closing server");
+  // await pool.end();
+  server.stop(true);
+  logger.info("Exiting...");
+  process.exit(0);
+});

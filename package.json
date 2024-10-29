@@ -1,22 +1,33 @@
 {
   "name": "cbt-hono-react",
   "scripts": {
-    "dev": "bun run --hot server/index.ts",
+    "dev": "bun run --hot server/index.ts | pino-pretty",
     "format:write": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "db:create": "bun run bin/database.ts --action create | pino-pretty",
+    "db:delete": "bun run bin/database.ts --action delete | pino-pretty"
   },
   "dependencies": {
-    "hono": "^4.6.8"
+    "@hono/zod-validator": "^0.4.1",
+    "drizzle": "^1.4.0",
+    "drizzle-zod": "^0.5.1",
+    "hono": "^4.6.8",
+    "pg": "^8.13.1",
+    "pino": "^9.5.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.2",
     "@eslint/js": "^9.13.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
     "@types/bun": "latest",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.26.2",
     "eslint": "^9.13.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-drizzle": "^0.2.3",
     "globals": "^15.11.0",
+    "pino-pretty": "^11.3.0",
     "prettier": "^3.3.3",
     "typescript-eslint": "^8.12.1"
   }
