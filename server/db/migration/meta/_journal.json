@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1730212439407,
+      "tag": "0000_light_robbie_robertson",
+      "breakpoints": true
+    }
+  ]
+}

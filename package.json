@@ -5,7 +5,13 @@
     "format:write": "prettier . --write",
     "format:check": "prettier . --check",
     "db:create": "bun run bin/database.ts --action create | pino-pretty",
-    "db:delete": "bun run bin/database.ts --action delete | pino-pretty"
+    "db:delete": "bun run bin/database.ts --action delete | pino-pretty",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull",
+    "db:drop": "drizzle-kit drop",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",

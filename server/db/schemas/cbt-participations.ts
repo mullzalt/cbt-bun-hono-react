@@ -22,8 +22,6 @@ export const cbtParticipations = pg.pgTable(
       .notNull(),
   },
   (table) => ({
-    compoundKey: pg.primaryKey({
-      columns: [table.userId, table.cbtId],
-    }),
+    unique: pg.unique().on(table.cbtId, table.userId),
   }),
 );

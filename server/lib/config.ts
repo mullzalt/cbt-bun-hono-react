@@ -8,7 +8,7 @@ export const config = {
     user: Env.DATABASE_USER,
     password: Env.DATABASE_PASSWORD,
     name: Env.DATABASE_NAME,
-    url: Env.DATABASE_URL,
+    url: `postgres://${Env.DATABASE_USER}:${Env.DATABASE_PASSWORD}@${Env.DATABASE_HOST}:${Env.DATABASE_PORT}/${Env.DATABASE_NAME}`,
   },
   worker: {
     host: Env.REDIS_HOST,
