@@ -6,4 +6,8 @@ const logger = pino({
   level: Env.LOG_LEVEL || "info",
 });
 
-export { logger };
+const appLogger = (message: string, ...rest: string[]) => {
+  logger.info(message, ...rest);
+};
+
+export { logger, appLogger };
