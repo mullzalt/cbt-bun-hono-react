@@ -1,0 +1,28 @@
+{
+  "auth": {
+    "sign-in-title": "Sign In",
+    "sign-in-desc": "Masukan email dan password anda untuk melanjutkan",
+    "sign-in-button": "Masuk",
+    "sign-up-button": "Daftar",
+    "or-continue": "atau lanjutkan dengan",
+    "sign-in-email-placeholder": "Masukan alamat email",
+    "sign-in-password-placeholder": "Masukan kata sandi"
+  },
+  "lang": {
+    "change-lang": "Pilih bahasa"
+  },
+  "error": {
+    "unknown": "Terjadi kesalahan yang tidak diketahui"
+  },
+  "terms": {
+    "user": "Pengguna",
+    "admin": "Admin",
+    "teacher": "Guru",
+    "student": "Siswa",
+    "sign-out": "Keluar",
+    "account": "Akun",
+    "cbt": "CBT",
+    "module": "Modul",
+    "subject": "Mata Pelajaran"
+  }
+}

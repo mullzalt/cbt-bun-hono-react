@@ -15,9 +15,13 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",
+    "@lucia-auth/adapter-drizzle": "^1.1.0",
+    "arctic": "^2.1.0",
     "drizzle": "^1.4.0",
     "drizzle-zod": "^0.5.1",
     "hono": "^4.6.8",
+    "lucia": "^3.2.2",
+    "oslo": "^1.2.1",
     "pg": "^8.13.1",
     "pino": "^9.5.0",
     "zod": "^3.23.8"
@@ -25,6 +29,7 @@
   "devDependencies": {
     "@eslint/compat": "^1.2.2",
     "@eslint/js": "^9.13.0",
+    "@faker-js/faker": "^9.1.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
     "@types/bun": "latest",
     "@types/pg": "^8.11.10",

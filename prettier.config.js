@@ -3,7 +3,9 @@ module.exports = {
   importOrder: [
     "^(react/(.*)$)|^(react$)",
     "^(hono/(.*)$)|^(hono$)",
+    "^(zod/(.*)$)|^(zod$)",
     "^(drizzle-orm/(.*)$)|^(drizzle-orm$)",
+    "^(drizzle-zod/(.*)$)|^(drizzle-zod$)",
     "^(@tanstack/react-router/(.*)$)|^(@tanstack/react-router$)",
     "^(@tanstack/(.*)$)|^(@tanstack$)",
     "",

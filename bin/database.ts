@@ -2,8 +2,8 @@ import { parseArgs } from "util";
 
 import { Client } from "pg";
 
-import { config } from "@/lib/config";
-import { logger } from "@/lib/logger";
+import { config } from "../server/lib/config";
+import { logger } from "../server/lib/logger";
 
 const { values } = parseArgs({
   args: Bun.argv,

@@ -24,9 +24,9 @@
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": true,
 
-    "paths": {
-      "@/shared/*": ["./shared/*"],
-      "@/*": ["./server/*"]
-    }
+    // "paths": {
+    //   "@/shared/*": ["./shared/*"],
+    //   "@/*": ["./server/*"]
+    // }
   }
 }

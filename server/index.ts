@@ -12,7 +12,6 @@ const server = Bun.serve({
 logger.info(`Server is running on ${server.url.origin}, env: ${Env.NODE_ENV}`);
 
 process.on("SIGINT", async () => {
-  logger.info("Closing server");
   await pool.end();
   server.stop(true);
   logger.info("Exiting...");

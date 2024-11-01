@@ -15,7 +15,10 @@ export function serveJson<
   TPagination = never,
   TStatus extends StatusCode = StatusCode,
   TCtx extends Context = Context,
->(c: TCtx, options: ServeJsonOptions<TData, TMetadata, TPagination, TStatus>) {
+>(
+  c: TCtx,
+  options: ServeJsonOptions<TData, TMetadata, TPagination, TStatus> = {},
+) {
   const { message = "OK", status = 200, data, metadata, pagination } = options;
   return c.json(
     {

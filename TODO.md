@@ -32,12 +32,12 @@
 
 # Users
 
-- [] Auth sign-in
-- [] Auth sign-in google
-- [] Auth sign-up google
-- [] Auth sign-out
+- [x] Auth sign-in
+- [x] Auth sign-in google
+- [x] Auth sign-up google
+- [x] Auth sign-out
 
 - [] Admin create user
-- [] paginate by user
+- [] paginate user by cursor
 - [] view user
 - [] role badge

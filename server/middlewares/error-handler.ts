@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import type { ResponseError } from "@/shared/types/response";
+import type { ResponseError } from "../../shared/types/response";
 
 export const errorHandler =
   <TCtx extends Context>() =>
@@ -18,7 +18,6 @@ export const errorHandler =
           success: false,
           error: {
             message: error.message,
-            stack: isProduction ? undefined : error.stack,
           },
         },
         error.status,

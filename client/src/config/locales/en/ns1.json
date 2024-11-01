@@ -1,0 +1,28 @@
+{
+  "auth": {
+    "sign-in-title": "Sign In",
+    "sign-in-desc": "Enter your email and password below to continue",
+    "sign-in-button": "Sign in",
+    "sign-up-button": "Sign up",
+    "or-continue": "or continue with",
+    "sign-in-email-placeholder": "Enter your email",
+    "sign-in-password-placeholder": "Enter your password"
+  },
+  "lang": {
+    "change-lang": "Choose a language"
+  },
+  "error": {
+    "unknown": "Unknown Error"
+  },
+  "terms": {
+    "user": "User",
+    "admin": "Admin",
+    "teacher": "Teacher",
+    "student": "Student",
+    "sign-out": "Sign Out",
+    "account": "Account",
+    "cbt": "CBT",
+    "module": "Module",
+    "subject": "Subject"
+  }
+}
