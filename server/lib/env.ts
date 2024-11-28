@@ -29,6 +29,9 @@ const serveEnv = z.object({
   GOOGLE_REDIRECT_URL: z
     .string()
     .default("http://localhost:3000/api/auth/sign-in/google/callback"),
+  INVITATION_REDIRECT_URL: z
+    .string()
+    .default("http://localhost:5173/invitations"),
 });
 
 export const Env = serveEnv.parse(process.env);

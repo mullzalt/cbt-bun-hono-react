@@ -66,7 +66,7 @@ export function AuthFormWrapper({
             </Link>
           </Button>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            {/* <LanguageToggle /> */}
             <ModeToggle />
             <Button asChild variant={"ghost"}>
               <Link href="/examples/authentication">

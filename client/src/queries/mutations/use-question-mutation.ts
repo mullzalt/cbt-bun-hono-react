@@ -1,0 +1,237 @@
+import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { arrayMove } from "@dnd-kit/sortable";
+import { produce } from "immer";
+import { toast } from "sonner";
+
+import { QuestionForm } from "@/shared/schemas/cbt-module-question.schema";
+
+import {
+  CbtQuestionsResponse,
+  createQuestion,
+  deleteQuestion,
+  setAnswer,
+  updateQuestion,
+} from "../cbt-question";
+
+export function useCreateQuestion({
+  cbtId,
+  cbtModuleId,
+}: {
+  cbtId: string;
+  cbtModuleId: string;
+}) {
+  const queryClient = useQueryClient();
+  const queryKey: QueryKey = [
+    "cbts",
+    "cbt",
+    "modules",
+    "questions",
+    { cbtId, moduleId: cbtModuleId },
+  ];
+
+  return useMutation({
+    mutationFn: async (value: QuestionForm) =>
+      await createQuestion({ param: { moduleId: cbtModuleId }, form: value }),
+    onMutate: async (value) => {
+      await queryClient.cancelQueries({ queryKey });
+      const prevData = queryClient.getQueryData<CbtQuestionsResponse>(queryKey);
+
+      const updatedData = produce(prevData, (draft) => {
+        if (!draft) return undefined;
+        const { text = "" } = value;
+
+        draft.data.push({
+          id: "uuid",
+          cbtModuleId,
+          text,
+          picture: { file: { url: "" } },
+          options: [],
+          answers: [],
+          createdAt: "",
+          updatedAt: "",
+          deletedAt: null,
+        });
+      });
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, updatedData);
+
+      return { prevData };
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, res);
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+    onError: (error, _, context) => {
+      toast.error("Failed to update question:" + error.message);
+      if (context?.prevData) {
+        queryClient.setQueryData<CbtQuestionsResponse>(
+          queryKey,
+          context.prevData,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+  });
+}
+
+export function useUpdateQuestion({
+  cbtId,
+  cbtModuleId,
+}: {
+  cbtId: string;
+  cbtModuleId: string;
+}) {
+  const queryClient = useQueryClient();
+  const queryKey: QueryKey = [
+    "cbts",
+    "cbt",
+    "modules",
+    "questions",
+    { cbtId, moduleId: cbtModuleId },
+  ];
+
+  return useMutation({
+    mutationFn: async ({
+      questionId,
+      value,
+    }: {
+      questionId: string;
+      value: QuestionForm;
+    }) =>
+      await updateQuestion({
+        param: { moduleId: cbtModuleId, questionId },
+        form: value,
+      }),
+    onMutate: async ({ questionId, value }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const prevData = queryClient.getQueryData<CbtQuestionsResponse>(queryKey);
+
+      const updatedData = produce(prevData, (draft) => {
+        if (!draft) return undefined;
+        const { text = "" } = value;
+
+        const dataIndex = draft.data.map((d) => d.id).indexOf(questionId);
+        const prev = draft.data[dataIndex];
+        draft.data[dataIndex] = { ...prev, text };
+      });
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, updatedData);
+
+      return { prevData };
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, res);
+    },
+    onError: (error, _, context) => {
+      toast.error("Failed to update question:" + error.message);
+      if (context?.prevData) {
+        queryClient.setQueryData<CbtQuestionsResponse>(
+          queryKey,
+          context.prevData,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+  });
+}
+
+export function useDeleteQuestion({
+  cbtId,
+  cbtModuleId,
+}: {
+  cbtId: string;
+  cbtModuleId: string;
+}) {
+  const queryClient = useQueryClient();
+  const queryKey: QueryKey = [
+    "cbts",
+    "cbt",
+    "modules",
+    "questions",
+    { cbtId, moduleId: cbtModuleId },
+  ];
+
+  return useMutation({
+    mutationFn: async (questionId: string) =>
+      await deleteQuestion({ param: { moduleId: cbtModuleId, questionId } }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey });
+      const prevData = queryClient.getQueryData<CbtQuestionsResponse>(queryKey);
+
+      const updatedData = produce(prevData, (draft) => {
+        if (!draft) return undefined;
+        draft.data.filter((data) => data.id !== id);
+      });
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, updatedData);
+
+      return { prevData };
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, res);
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+    onError: (error, _, context) => {
+      toast.error("Failed to delete question:" + error.message);
+      if (context?.prevData) {
+        queryClient.setQueryData<CbtQuestionsResponse>(
+          queryKey,
+          context.prevData,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+  });
+}
+
+export function useSetAnswer({
+  cbtId,
+  cbtModuleId,
+  questionId,
+}: {
+  cbtId: string;
+  cbtModuleId: string;
+  questionId: string;
+}) {
+  const queryClient = useQueryClient();
+  const queryKey: QueryKey = [
+    "cbts",
+    "cbt",
+    "modules",
+    "questions",
+    { cbtId, moduleId: cbtModuleId },
+  ];
+
+  return useMutation({
+    mutationFn: async (answerId: string) =>
+      await setAnswer({
+        param: { moduleId: cbtModuleId, questionId },
+        form: { answerId },
+      }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey });
+      const prevData = queryClient.getQueryData<CbtQuestionsResponse>(queryKey);
+
+      return { prevData };
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData<CbtQuestionsResponse>(queryKey, res);
+    },
+    onError: (error, _, context) => {
+      toast.error("Failed to delete question:" + error.message);
+      if (context?.prevData) {
+        queryClient.setQueryData<CbtQuestionsResponse>(
+          queryKey,
+          context.prevData,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    },
+  });
+}

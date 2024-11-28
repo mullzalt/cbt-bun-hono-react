@@ -37,7 +37,65 @@
 - [x] Auth sign-up google
 - [x] Auth sign-out
 
-- [] Admin create user
-- [] paginate user by cursor
-- [] view user
+- [x] Admin create user
+- [x] paginate user by cursor
+- [x] view user
 - [] role badge
+
+- [] update profile
+- [] update password
+
+# CBT
+
+- [x] CRUD
+- [x] Cursor paginate
+- [x] filter by status
+- [x] display status
+
+- [] card
+- [] Config
+
+# Subject
+
+- [x] CRUD
+- [x] pagination
+
+# CBT Module
+
+# ADD Parent
+
+- [] add parents
+
+- [x] CRUD
+- [x] many by cbt id
+- [] Config
+- [x] Arbitrary order
+
+# CBT Question
+
+- [] CRUD
+- [] image upload
+- [] table maker?
+
+- [] shuffle
+
+# CBT Question Option
+
+- [] CRUD
+- [] image upload
+
+# CBT Participation
+
+- [] join
+- [] verify join
+
+# CBT Module participation
+
+- [] join
+- [] timer
+
+# CBT submission
+
+- [] answer
+- [] mark
+- [] sava shuffled

@@ -13,15 +13,7 @@ const lucia = new Lucia(adapter, {
       secure: process.env.NODE_ENV === "production",
     },
   },
-  getUserAttributes: (attributes) => {
-    const { passwordHash, image, emailVerifiedAt, ...rest } = attributes;
-    return {
-      ...rest,
-      image: image ?? "",
-      emailVerified: Boolean(emailVerifiedAt),
-      hasPassword: Boolean(passwordHash),
-    };
-  },
+  getUserAttributes: (attributes) => attributes,
 });
 
 declare module "lucia" {

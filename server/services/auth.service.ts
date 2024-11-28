@@ -1,36 +1,37 @@
 import type { Context } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
+import { eq } from "drizzle-orm";
 
-import { generateCodeVerifier, generateState } from "arctic";
-import type { Session } from "lucia";
-
-import type { SignIn } from "../../shared/schemas/auth.schema";
+import type { CreatePassword, SignIn } from "../../shared/schemas/auth.schema";
+import { users } from "../db/schemas";
 import { lucia } from "../lib/lucia";
-import { google, type GoogleUser } from "../lib/oauth";
-import { UserAccountRepository } from "../repositories/user-account.repository";
-import { UserRepository } from "../repositories/user.repository";
-import { ForbiddenError } from "../util/http-error";
+import type { LuciaContext } from "../lib/lucia-context";
+import { userRepository } from "../repositories/user.repository";
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../util/http-error";
 
-class AuthService {
-  private user;
-  private accounts;
+export const authService = <TContext extends Context<LuciaContext>>(
+  c: TContext,
+) => {
+  const repo = userRepository();
 
-  constructor() {
-    this.user = new UserRepository();
-    this.accounts = new UserAccountRepository();
-  }
+  const signIn = async (value: SignIn) => {
+    const { email, password } = value;
+    const user = await repo.findByEmail(email);
+    const session = c.get("session");
 
-  async signIn(values: SignIn) {
-    const { email, password } = values;
-
-    const user = await this.user.findByEmail(email);
+    if (session) {
+      await signOut();
+    }
 
     if (!user) {
-      throw new ForbiddenError("Incorrect Email or Password");
+      throw new ForbiddenError("wrong_credetial");
     }
 
     if (!user.passwordHash) {
-      throw new ForbiddenError("Incorrect Email or Password");
+      throw new ForbiddenError("wrong_credetial");
     }
 
     const validPassword = await Bun.password.verify(
@@ -39,108 +40,80 @@ class AuthService {
     );
 
     if (!validPassword) {
-      throw new ForbiddenError("Incorrect Email or Password");
+      throw new ForbiddenError("wrong_credetial");
     }
 
     const newSession = await lucia.createSession(user.id, {
       email: user.email,
     });
     const sessionCookie = lucia.createSessionCookie(newSession.id).serialize();
+    c.header("Set-Cookie", sessionCookie, { append: true });
+  };
 
-    return sessionCookie;
-  }
-
-  async signOut(session: Session | null) {
+  const signOut = async () => {
+    const session = c.get("session");
     if (session) {
       await lucia.invalidateSession(session.id);
     }
-    return lucia.createBlankSessionCookie().serialize();
-  }
 
-  async setGoogleState<TCtx extends Context>(c: TCtx) {
-    const state = generateState();
-    const codeVerifier = generateCodeVerifier();
-    const url = google.createAuthorizationURL(state, codeVerifier, [
-      "email",
-      "profile",
-    ]);
+    c.header("Set-Cookie", lucia.createBlankSessionCookie().serialize());
+  };
 
-    setCookie(c, "code_verifier", codeVerifier, {
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 60 * 10,
-      sameSite: "Lax",
-    });
+  const getUserInfo = async () => {
+    const sessionUser = c.get("user");
+    if (!sessionUser) {
+      throw new UnauthorizedError("unauthorized");
+    }
+    const { id, role } = sessionUser;
 
-    setCookie(c, "google_oauth_state", state, {
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 60 * 10,
-      sameSite: "Lax",
-    });
-
-    return url.toString();
-  }
-
-  async signInGoogle<TCtx extends Context>(c: TCtx): Promise<boolean> {
-    const code = c.req.query("code")?.toString() ?? null;
-    const state = c.req.query("state")?.toString() ?? null;
-    const codeVerifier = getCookie(c)["code_verifier"] ?? null;
-    const storedState = getCookie(c)["google_oauth_state"] ?? null;
-
-    if (
-      !code ||
-      !state ||
-      !storedState ||
-      !codeVerifier ||
-      state !== storedState
-    ) {
-      return false;
+    const user = await repo.getUserWithProfiles(id);
+    if (!user) {
+      throw new NotFoundError("not_found");
     }
 
-    const tokens = await google.validateAuthorizationCode(code, codeVerifier);
-
-    const googleUserResponse = await fetch(
-      "https://openidconnect.googleapis.com/v1/userinfo",
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken()}`,
-        },
-      },
-    );
-
     const {
-      email,
-      email_verified,
-      picture: image,
-      name,
-      sub,
-    } = (await googleUserResponse.json()) as GoogleUser;
+      passwordHash,
+      profile: _profile,
+      studentProfile: _studentProfile,
+      ...rest
+    } = user;
 
-    const emailVerifiedAt = email_verified ? new Date() : null;
+    const profile = _profile as typeof _profile | null;
 
-    const user = await this.user.create({
-      email,
-      name,
-      emailVerifiedAt,
-      image,
-    });
+    const studentProfile =
+      role === "student"
+        ? (_studentProfile as typeof _studentProfile | null)
+        : undefined;
 
-    await this.accounts.create({
-      userId: user.id,
-      providerUserId: sub,
-      provider: "google",
-    });
+    return {
+      data: {
+        ...rest,
+        profile,
+        studentProfile,
+      },
+      metadata: {
+        shouldFillPassword: Boolean(!passwordHash),
+        shouldFillProfile: Boolean(!profile),
+        shouldFillStudentProfile:
+          role === "student" ? Boolean(!studentProfile) : false,
+      },
+    };
+  };
 
-    const session = await lucia.createSession(user.id, { email: user.email });
-    const sessionCookie = lucia.createSessionCookie(session.id).serialize();
+  const createPassword = async (value: CreatePassword) => {
+    const user = c.get("user")!;
 
-    c.header("Set-Cookie", sessionCookie, { append: true });
+    const { password } = value;
 
-    return true;
-  }
-}
+    const passwordHash = await Bun.password.hash(password);
 
-export const authService = new AuthService();
+    await repo.update({ passwordHash }).where(eq(users.id, user.id));
+  };
+
+  return {
+    signIn,
+    signOut,
+    getUserInfo,
+    createPassword,
+  };
+};

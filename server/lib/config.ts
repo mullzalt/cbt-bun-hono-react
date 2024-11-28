@@ -21,4 +21,7 @@ export const config = {
       redirectUrl: Env.GOOGLE_REDIRECT_URL,
     },
   },
+  invitation: {
+    url: (token: string) => [Env.INVITATION_REDIRECT_URL, token].join("/"),
+  },
 };

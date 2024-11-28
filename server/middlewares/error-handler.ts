@@ -1,11 +1,13 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
+import { DatabaseError } from "pg";
+
 import type { ResponseError } from "../../shared/types/response";
 
 export const errorHandler =
   <TCtx extends Context>() =>
-  (error: Error | HTTPException, c: TCtx) => {
+  (error: Error | HTTPException | DatabaseError, c: TCtx) => {
     const isProduction = process.env.NODE_ENV === "production";
 
     if (error instanceof HTTPException && error.res) {
@@ -18,9 +20,22 @@ export const errorHandler =
           success: false,
           error: {
             message: error.message,
+            cause: error?.cause,
           },
         },
         error.status,
+      );
+    }
+
+    if (error instanceof DatabaseError && error.code === "22P02") {
+      return c.json<ResponseError>(
+        {
+          success: false,
+          error: {
+            message: "Invalid UUID",
+          },
+        },
+        400,
       );
     }
 
@@ -29,6 +44,7 @@ export const errorHandler =
         success: false,
         error: {
           message: error.message,
+          cause: error?.cause,
           stack: isProduction ? undefined : error.stack,
         },
       },

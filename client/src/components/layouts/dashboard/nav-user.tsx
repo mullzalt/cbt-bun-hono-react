@@ -1,8 +1,16 @@
+import { useNavigate } from "@tanstack/react-router";
+
 import { SessionUser } from "@/queries/auth";
-import { ChevronsUpDown, LogOut, UserRoundIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  LogOutIcon,
+  UserRoundIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { nameInitials } from "@/lib/string";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,14 +29,20 @@ import {
   SidebarMenuSkeleton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ButtonExtra } from "@/components/button-extra";
 
 export function NavUser() {
   const { t } = useTranslation();
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
 
-  const { user, isLoading } = useSession();
+  const { user, signOut, isSignOutPending } = useSession();
 
-  if (!user || isLoading) {
+  if (!user) {
+    return <SidebarMenuSkeleton />;
+  }
+
+  if (!user.profile) {
     return <SidebarMenuSkeleton />;
   }
 
@@ -42,13 +56,23 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
-                  {nameInitials(user.name)}
+                <AvatarImage
+                  src={user.profile.image || ""}
+                  alt={user.profile.name}
+                />
+                <AvatarFallback
+                  className="rounded-lg"
+                  style={{
+                    backgroundColor: user.profile.metadata.colorFallback,
+                  }}
+                >
+                  {nameInitials(user.profile.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate font-semibold">
+                  {user.profile.name}
+                </span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -62,14 +86,24 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.image} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {nameInitials(user.name)}
+                <Avatar className={cn("h-8 w-8 rounded-lg")}>
+                  <AvatarImage
+                    src={user.profile.image || undefined}
+                    alt={user.profile.name}
+                  />
+                  <AvatarFallback
+                    className={cn("rounded-lg")}
+                    style={{
+                      backgroundColor: user.profile.metadata.colorFallback,
+                    }}
+                  >
+                    {nameInitials(user.profile.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">
+                    {user.profile.name}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
@@ -83,11 +117,16 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href="/api/auth/sign-out?redirect=%2Fsign-in">
-                <LogOut />
-                {t("terms.sign-out")}
-              </a>
+            <DropdownMenuItem
+              onClick={async () =>
+                await signOut(undefined, {
+                  onSuccess: async () => {
+                    await navigate({ to: "/sign-in" });
+                  },
+                })
+              }
+            >
+              <LogOutIcon /> Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

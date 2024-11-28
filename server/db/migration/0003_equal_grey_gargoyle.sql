@@ -1,0 +1,1 @@
+ALTER TABLE "user_invitations" ADD CONSTRAINT "user_invitations_token_unique" UNIQUE("token");

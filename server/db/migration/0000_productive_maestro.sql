@@ -2,9 +2,6 @@ CREATE TYPE "public"."user_role" AS ENUM('admin', 'teacher', 'student');--> stat
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" varchar NOT NULL,
-	"name" text NOT NULL,
-	"phone_number" varchar,
-	"picture" text,
 	"password_hash" text,
 	"email_verified_at" timestamp with time zone,
 	"role" "user_role" DEFAULT 'student' NOT NULL,
@@ -24,6 +21,16 @@ CREATE TABLE IF NOT EXISTS "user_sessions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" uuid NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "user_profiles" (
+	"user_id" uuid PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"phone_number" varchar,
+	"picture" text,
+	"metadata" jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_student_profiles" (
@@ -79,7 +86,7 @@ CREATE TABLE IF NOT EXISTS "cbt_module_questions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"cbt_module_id" uuid NOT NULL,
 	"image" text,
-	"text" text,
+	"text" text DEFAULT '' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -145,6 +152,36 @@ CREATE TABLE IF NOT EXISTS "cbt_module_question_answers" (
 	"cbt_module_question_option_id" uuid NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "attachment_files" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"mime_type" varchar NOT NULL,
+	"size" integer NOT NULL,
+	"path" text NOT NULL,
+	"url" text NOT NULL,
+	"checksum" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "attachments" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"attachment_file_id" uuid NOT NULL,
+	"table" text NOT NULL,
+	"tableId" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "attachments_attachment_file_id_table_tableId_unique" UNIQUE("attachment_file_id","table","tableId")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "array_orderable" (
+	"reference_id" uuid NOT NULL,
+	"orderable" varchar NOT NULL,
+	"reference_type" varchar NOT NULL,
+	"ids" uuid[] DEFAULT ARRAY[]::uuid[] NOT NULL,
+	CONSTRAINT "array_orderable_orderable_reference_id_reference_type_pk" PRIMARY KEY("orderable","reference_id","reference_type")
+);
+--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "user_accounts" ADD CONSTRAINT "user_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
@@ -153,6 +190,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "user_sessions" ADD CONSTRAINT "user_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -255,6 +298,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "cbt_module_question_answers" ADD CONSTRAINT "cbt_module_question_answers_cbt_module_question_option_id_cbt_module_question_options_id_fk" FOREIGN KEY ("cbt_module_question_option_id") REFERENCES "public"."cbt_module_question_options"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "attachments" ADD CONSTRAINT "attachments_attachment_file_id_attachment_files_id_fk" FOREIGN KEY ("attachment_file_id") REFERENCES "public"."attachment_files"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

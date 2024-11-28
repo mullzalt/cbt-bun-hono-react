@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { useLocale } from "@/providers/locale-provider";
 import { GlobeIcon, LanguagesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -13,10 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLocale } from "@/providers/locale-provider";
 
 type Lang = "en" | "id";
-
 
 export function LanguageToggle() {
   const { t } = useTranslation();

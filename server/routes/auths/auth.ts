@@ -2,39 +2,72 @@ import { Hono } from "hono";
 
 import { zValidator } from "@hono/zod-validator";
 
-import { signInSchema } from "../../../shared/schemas/auth.schema";
-import type { LuciaContext } from "../../lib/lucia-context";
 import {
-  verifyNotSignedIn,
-  verifySignedIn,
-} from "../../middlewares/auth-handler";
+  createPasswordSchema,
+  signInSchema,
+} from "../../../shared/schemas/auth.schema";
+import {
+  createStudentProfileSchema,
+  upsertProfileSchema,
+} from "../../../shared/schemas/profile.schema";
+import type { LuciaContext } from "../../lib/lucia-context";
+import { verifySignedIn } from "../../middlewares/auth-handler";
 import { authService } from "../../services/auth.service";
+import { profileService } from "../../services/profile.service";
 import { serveJson } from "../../util/response";
 
 export const authRoute = new Hono<LuciaContext>()
-  .post(
-    "/sign-in",
-    verifyNotSignedIn(),
-    zValidator("json", signInSchema),
-    async (c) => {
-      const values = c.req.valid("json");
-      const sessionCookie = await authService.signIn(values);
-      c.header("Set-Cookie", sessionCookie, { append: true });
-
-      return serveJson(c);
-    },
-  )
+  .post("/sign-in", zValidator("form", signInSchema), async (c) => {
+    const values = c.req.valid("form");
+    await authService(c).signIn(values);
+    return serveJson(c);
+  })
 
   .get("/sign-out", async (c) => {
-    const session = c.get("session");
-    const redirect = c.req.query("redirect") || "/";
-    const blankSessionCookie = await authService.signOut(session);
-    c.header("Set-Cookie", blankSessionCookie);
-    return c.redirect(redirect);
+    await authService(c).signOut();
+    return serveJson(c);
   })
 
   .get("/info", verifySignedIn(), async (c) => {
-    const user = c.get("user")!;
-    return serveJson(c, { data: user });
+    const { data, metadata } = await authService(c).getUserInfo();
+    return serveJson(c, { data, metadata });
   })
-  .post("/password", verifySignedIn());
+  .post(
+    "/password",
+    verifySignedIn(),
+    zValidator("form", createPasswordSchema),
+    async (c) => {
+      const value = c.req.valid("form");
+
+      await authService(c).createPassword(value);
+
+      const { data, metadata } = await authService(c).getUserInfo();
+      return serveJson(c, { data, metadata });
+    },
+  )
+  .post(
+    "/profile",
+    verifySignedIn(),
+    zValidator("form", upsertProfileSchema),
+    async (c) => {
+      const value = c.req.valid("form");
+
+      await profileService(c).upsertProfile(value);
+
+      const { data, metadata } = await authService(c).getUserInfo();
+      return serveJson(c, { data, metadata });
+    },
+  )
+  .post(
+    "/student-profile",
+    verifySignedIn(),
+    zValidator("form", createStudentProfileSchema),
+    async (c) => {
+      const value = c.req.valid("form");
+
+      await profileService(c).createStudentProfile(value);
+
+      const { data, metadata } = await authService(c).getUserInfo();
+      return serveJson(c, { data, metadata });
+    },
+  );

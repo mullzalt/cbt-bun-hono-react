@@ -1,8 +1,8 @@
-import { Hono } from "hono";
-
-import { authRoute } from "./auths/auth";
-import { oauthGoogleRoute } from "./auths/oauth-google";
-
-export const routes = new Hono()
-  .route("/auth", authRoute)
-  .route("/auth", oauthGoogleRoute);
+export * from "./auths/auth";
+export * from "./auths/oauth-google";
+export * from "./cbt/cbt-module.route";
+export * from "./cbt/cbt-question.route";
+export * from "./cbt/cbt-subject.route";
+export * from "./cbt/cbt.route";
+export * from "./users/user.route";
+export * from "./users/invitations.route";

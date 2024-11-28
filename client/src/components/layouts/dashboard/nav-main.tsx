@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 
 import {
   BookOpenIcon,
+  IdCardIcon,
   PencilRulerIcon,
   UserCogIcon,
   Users2Icon,
@@ -58,6 +59,19 @@ export function AdminSidebarContent() {
       <SidebarGroup>
         <SidebarGroupLabel>{t("terms.user")}</SidebarGroupLabel>
         <SidebarMenu>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/admin/users/invitations"}
+            >
+              <Link to="/admin/users/invitations">
+                <IdCardIcon />
+                Invitation
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild

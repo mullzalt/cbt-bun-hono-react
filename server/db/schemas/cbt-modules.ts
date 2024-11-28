@@ -1,5 +1,7 @@
+import { relations } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 
+import { cbtModuleQuestions } from "./cbt-module-questions";
 import { cbtSubjects } from "./cbt-subjects";
 import { cbts } from "./cbts";
 import { softDeletable, uuidPrimaryKey, withTimestamps } from "./util";
@@ -37,3 +39,15 @@ export const cbtModules = pg.pgTable("cbt_modules", {
   ...withTimestamps,
   ...softDeletable,
 });
+
+export const cbtModulesRelations = relations(cbtModules, ({ one, many }) => ({
+  subject: one(cbtSubjects, {
+    fields: [cbtModules.cbtSubjectId],
+    references: [cbtSubjects.id],
+  }),
+  questions: many(cbtModuleQuestions),
+  question: one(cbtModuleQuestions, {
+    fields: [cbtModules.id],
+    references: [cbtModuleQuestions.cbtModuleId],
+  }),
+}));

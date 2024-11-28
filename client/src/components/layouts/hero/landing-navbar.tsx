@@ -21,7 +21,7 @@ export function LandingNavbar() {
           <Link to="/">Twittor Academy</Link>
         </Button>
         <div className="flex gap-2 items-center justify-end">
-          <LanguageToggle />
+          {/* <LanguageToggle /> */}
           <ModeToggle />
           <Button variant={"secondary"} asChild>
             <Link to="/sign-in">{t("auth.sign-in-button")}</Link>

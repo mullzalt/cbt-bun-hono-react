@@ -1,0 +1,1 @@
+ALTER TABLE "user_invitations" ALTER COLUMN "role" SET NOT NULL;

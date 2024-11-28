@@ -2,6 +2,7 @@ import React from "react";
 import {
   createRootRouteWithContext,
   Outlet,
+  ScrollRestoration,
   useMatches,
 } from "@tanstack/react-router";
 import { type QueryClient } from "@tanstack/react-query";
@@ -10,11 +11,15 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { LocaleProvider } from "@/providers/locale-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 
+import type { SessionContext } from "@/hooks/use-session";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorComponent } from "@/components/route/error-boundary";
 import { NotFoundComponent } from "@/components/route/not-found";
 
 interface RouterContext {
   queryClient: QueryClient;
+  session: SessionContext;
 }
 
 const TanStackRouterDevtools =
@@ -28,7 +33,6 @@ const TanStackRouterDevtools =
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
-  notFoundComponent: NotFoundComponent,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
@@ -48,13 +52,18 @@ function Meta({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <Meta>
-      <ThemeProvider defaultTheme="system">
-        <LocaleProvider>
-          <Outlet />
-        </LocaleProvider>
-      </ThemeProvider>
-      <ReactQueryDevtools />
-      <TanStackRouterDevtools position="bottom-left" />
+      <TooltipProvider>
+        <ThemeProvider defaultTheme="system">
+          <LocaleProvider>
+            <ScrollRestoration getKey={(location) => location.pathname} />
+            <Outlet />
+            <Toaster />
+          </LocaleProvider>
+        </ThemeProvider>
+
+        <ReactQueryDevtools />
+        <TanStackRouterDevtools position="bottom-left" />
+      </TooltipProvider>
     </Meta>
   );
 }

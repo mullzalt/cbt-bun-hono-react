@@ -1,0 +1,7 @@
+static/attachments/images/*
+static/attachments/temp/*
+
+!static/attachments/.keep
+!static/attachments/temp/.keep
+!static/attachments/images/.keep
+

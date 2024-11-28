@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "not_found": "{resource} not found",
+    "wrong_credetial": "Invalid email or password"
+  }
+}

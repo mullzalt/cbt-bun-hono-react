@@ -24,19 +24,8 @@ import {
   AuthPage,
 } from "@/components/layouts/auth/auth-wrapper";
 
-const searchSchema = z.object({
-  redirect: fallback(z.string(), "/dashboard").default("/dashboard"),
-});
-
 export const Route = createFileRoute("/_auth/sign-in")({
   component: SignInComponent,
-  validateSearch: zodSearchValidator(searchSchema),
-  beforeLoad: async ({ context, search }) => {
-    const user = await validateSession(context.queryClient);
-    if (user) {
-      throw redirect({ to: search.redirect });
-    }
-  },
 });
 
 function SignInComponent() {

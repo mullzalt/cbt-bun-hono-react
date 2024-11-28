@@ -1,13 +1,13 @@
-import { InferResponseType } from "hono";
+import { InferRequestType, InferResponseType } from "hono";
 import { QueryClient, queryOptions } from "@tanstack/react-query";
 
 import { SignIn } from "@/shared/schemas/auth.schema";
 import { ResponseError } from "@/shared/types/response";
-import { api } from "@/lib/api";
+import { api, createFetcher } from "@/lib/api";
 
 export async function signIn(values: SignIn) {
   const res = await api.auth["sign-in"].$post({
-    json: values,
+    form: values,
   });
 
   if (!res.ok) {
@@ -23,10 +23,21 @@ export async function getAuthUser() {
   if (!res.ok) {
     return null;
   }
-  const { data } = await res.json();
-  return data;
+  const { data, metadata } = await res.json();
+  return { data, metadata };
 }
 
+export const signOut = createFetcher(api.auth["sign-out"].$get);
+
+export const createPassword = createFetcher(api.auth.password.$post);
+
+export const createStudentProfile = createFetcher(
+  api.auth["student-profile"].$post,
+);
+
+export const upsertProfile = createFetcher(
+  api.auth.profile.$post
+)
 
 export const userSessionQueryOptions = () =>
   queryOptions({
@@ -40,4 +51,6 @@ export async function validateSession(queryClient: QueryClient) {
   return user;
 }
 
-export type SessionUser = InferResponseType<(typeof api.auth.info)["$get"]>["data"];
+export type SessionUser = InferResponseType<
+  (typeof api.auth.info)["$get"]
+>["data"];

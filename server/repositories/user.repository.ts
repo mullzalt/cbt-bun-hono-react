@@ -1,64 +1,135 @@
-import type {
-  CreateUser,
-  UpdateUser,
-  User,
-} from "../../shared/schemas/user.schema";
-import { users } from "../db/schemas";
-import { Repository } from "../lib/repository";
+import { eq, getTableColumns } from "drizzle-orm";
 
-export class UserRepository extends Repository<
-  User,
-  CreateUser,
-  UpdateUser,
-  typeof users
-> {
-  constructor() {
-    super(users);
-  }
+import type { UserUrlQuery } from "../../shared/query/user.query.schema";
+import type { InsertUser, UpdateUser } from "../../shared/schemas/user.schema";
+import { DB, type Database, type Transaction } from "../db";
+import { userProfiles, users } from "../db/schemas";
+import { makeCursorQuery } from "../lib/db/cursor";
+import { toSqlLike } from "../lib/db/search-query";
+import { makeDrizzlePgHelper } from "../lib/db/util";
 
-  async findById(id: string) {
-    const [data] = await this.db
-      .select()
-      .from(this.table)
-      .where(this._matchId(id));
-    if (!data) return null;
-    return data;
-  }
+export const userRepository = () => {
+  {
+    const db = DB;
+    const table = users;
+    const helper = makeDrizzlePgHelper(table);
 
-  async findByEmail(email: string) {
-    const matchEmail = this.where(({ email: _email }, { eq }) =>
-      eq(_email, email),
-    );
-    const [data] = await this.db.select().from(this.table).where(matchEmail);
-    if (!data) return null;
-    return data;
-  }
+    const create = (value: InsertUser, tx: Transaction | Database = db) =>
+      tx.insert(table).values(value);
 
-  async create(values: CreateUser) {
-    const { emailVerifiedAt } = values; // eslint-disable-line @typescript-eslint/no-unused-vars
-    const [data] = await this.db
-      .insert(this.table)
-      .values(values)
-      .onConflictDoUpdate({
-        target: this.table.email,
-        set: { emailVerifiedAt },
-      })
-      .returning();
-    return data;
-  }
+    const update = (value: UpdateUser, tx: Transaction | Database = db) =>
+      tx.update(table).set(value);
 
-  async update(id: string, values: UpdateUser) {
-    const prev = await this.findById(id);
-    if (!prev) return null;
-    const [data] = await this.db
-      .update(this.table)
-      .set(values)
-      .where(this._matchId(id))
-      .returning();
-    return data;
-  }
+    const findByEmail = (email: string) =>
+      db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.email, email),
+      });
 
-  private _matchId(id: string) {
-    return this.where(({ id: _id }, { eq }) => eq(_id, id));
+    const findById = (id: string) =>
+      db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, id),
+        with: {
+          profile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+          studentProfile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+        },
+      });
+
+    const parseUrlQuery = (query: UserUrlQuery) => {
+      const { where: cursorWhere, orderBy } = makeCursorQuery(table, {
+        primaryCursor: "createdAt",
+        orderBy: query.orderBy,
+        order: query.order,
+        cursor: query.cursor,
+      });
+
+      const searchQuery = toSqlLike(query.q);
+
+      const where = helper.where((col, { eq, and, or, ilike, inArray }) =>
+        and(
+          eq(col.role, query.role),
+          cursorWhere,
+          searchQuery
+            ? or(
+                ilike(col.email, searchQuery),
+                inArray(
+                  col.id,
+                  db
+                    .select({ id: userProfiles.userId })
+                    .from(userProfiles)
+                    .where(
+                      or(
+                        ilike(userProfiles.name, searchQuery),
+                        ilike(userProfiles.phoneNumber, searchQuery),
+                      ),
+                    ),
+                ),
+              )
+            : undefined,
+        ),
+      );
+
+      return { where, orderBy, limit: query.limit };
+    };
+
+    const getUsers = (query: UserUrlQuery) => {
+      const { where, orderBy, limit } = parseUrlQuery(query);
+
+      return db.query.users.findMany({
+        columns: {
+          passwordHash: false,
+        },
+        where,
+        with: {
+          profile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+          studentProfile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+        },
+        limit,
+        orderBy,
+      });
+    };
+
+    const countUsers = async (query: UserUrlQuery) => {
+      const { where } = parseUrlQuery(query);
+      const [data] = await helper.count(db).where(where).limit(1);
+      return data.count;
+    };
+
+    const getUserWithProfiles = (id: string) =>
+      db.query.users.findFirst({
+        where: (user, { eq }) => eq(user.id, id),
+        with: {
+          profile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+          studentProfile: {
+            columns: { userId: false, createdAt: false, updatedAt: false },
+          },
+        },
+      });
+
+    const isEmailTaken = async (email: string) => {
+      const user = await findByEmail(email);
+      return Boolean(user);
+    };
+
+    return {
+      create,
+      update,
+      getUsers,
+      getUserWithProfiles,
+      findByEmail,
+      isEmailTaken,
+      helper,
+      count: countUsers,
+      findById,
+    };
   }
-}
+};
